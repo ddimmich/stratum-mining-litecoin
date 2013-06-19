@@ -101,7 +101,7 @@ class MiningService(GenericService):
                 (block_header, block_hash, share_diff, on_submit) = Interfaces.template_registry.submit_share(job_id,
                     worker_name, session, extranonce1_bin, extranonce2, ntime, nonce, difficulty)
             except SubmitException as e:
-                log.debug("Worker %s failed initial share due to: %s" % (pool_worker,e[0]))
+                log.debug("Worker %s failed initial share due to: %s" % (worker_name,e[0]))
                 session['prev_diff'] = session['difficulty']
                 session['difficulty'] = settings.POOL_TARGET
                 self.connection_ref().rpc('mining.set_difficulty', [settings.POOL_TARGET, ], is_notification=True)
