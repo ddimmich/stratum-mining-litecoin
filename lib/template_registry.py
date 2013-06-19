@@ -232,7 +232,7 @@ class TemplateRegistry(object):
         if hash_int > target_user and \
 		( 'prev_jobid' not in session or session['prev_jobid'] < job_id \
 		or 'prev_diff' not in session or hash_int > self.diff_to_target(session['prev_diff']) ):
-            raise SubmitException("Share is above target")
+            raise SubmitException("Share is above target. Check client settings.")
 
         # Mostly for debugging purposes
         target_info = self.diff_to_target(100000)

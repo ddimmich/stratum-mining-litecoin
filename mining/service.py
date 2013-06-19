@@ -67,7 +67,10 @@ class MiningService(GenericService):
         
         session = self.connection_ref().get_session()
         session['extranonce1'] = extranonce1
-        session['difficulty'] = settings.POOL_TARGET  # Following protocol specs, default diff is 1
+        if settings.CHECK_CLIENT_HASH:
+            session['difficulty'] = settings.POOL_TARGET_INITIAL  # Initial difficulty
+        else:
+            session['difficulty'] = settings.POOL_TARGET  # Following protocol specs, default diff is 1
 
         return Pubsub.subscribe(self.connection_ref(), MiningSubscription()) + (extranonce1_hex, extranonce2_size)
         
@@ -90,6 +93,25 @@ class MiningService(GenericService):
         difficulty = session['difficulty']
         submit_time = Interfaces.timestamper.time()
         ip = self.connection_ref()._get_ip()
+
+        # Account for initial testing shares
+        if settings.CHECK_CLIENT_HASH and difficulty == settings.POOL_TARGET_INITIAL:
+            log.debug("First Authentication for  %s" % worker_name)
+            try:
+                (block_header, block_hash, share_diff, on_submit) = Interfaces.template_registry.submit_share(job_id,
+                    worker_name, session, extranonce1_bin, extranonce2, ntime, nonce, difficulty)
+            except SubmitException as e:
+                log.debug("Worker %s failed initial share due to: %s" % (pool_worker,e[0]))
+                session['prev_diff'] = session['difficulty']
+                session['difficulty'] = settings.POOL_TARGET
+                self.connection_ref().rpc('mining.set_difficulty', [settings.POOL_TARGET, ], is_notification=True)
+                raise 
+
+            # Update difficulty back to pool_target for the next submission
+            session['prev_diff'] = session['difficulty']
+            session['difficulty'] = settings.POOL_TARGET
+            self.connection_ref().rpc('mining.set_difficulty', [settings.POOL_TARGET, ], is_notification=True)
+            return True
     
         Interfaces.share_limiter.submit(self.connection_ref, job_id, difficulty, submit_time, worker_name)
             

@@ -178,3 +178,10 @@ VDIFF_TARGET_TIME = 30      # Target time per share (i.e. try to get 1 share per
 VDIFF_RETARGET_TIME = 120       # Check to see if we should retarget this often
 VDIFF_VARIANCE_PERCENT = 20 # Allow average time to very this % from target without retarget
 
+# Settings for inital target testing.
+# If enabled, a single share will be sent with the low difficulty.
+# This should doa  quick check for the client if they are submitting shares properly
+# The share does not get logges, or checked against the block
+CHECK_CLIENT_HASH = False    # Send a low level difficulty at first authorization
+POOL_TARGET_INITIAL =   1       # inital block difficulty
+

@@ -125,6 +125,13 @@ INSTANCE_ID = 31		# Used for extranonce and needs to be 0-31
 
 # Pool Target (Base Difficulty)
 POOL_TARGET = 16			# Pool-wide difficulty target int >= 1
+# Settings for inital target testing.
+# If enabled, a single share will be sent with the low difficulty.
+# This should doa  quick check for the client if they are submitting shares properly
+# The share does not get logges, or checked against the block
+CHECK_CLIENT_HASH = False    # Send a low level difficulty at first authorization
+POOL_TARGET_INITIAL =   1       # inital block difficulty
+
 
 # Variable Difficulty Enable
 VARIABLE_DIFF = True		# Master variable difficulty enable

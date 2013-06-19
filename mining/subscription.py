@@ -38,7 +38,11 @@ class MiningSubscription(Subscription):
             return result
         
         # Force set higher difficulty
-        self.connection_ref().rpc('mining.set_difficulty', [settings.POOL_TARGET, ], is_notification=True)
+        if settings.CHECK_CLIENT_HASH:
+            # Start with the initial low diff to make sure the client is submitting shares correctly
+            self.connection_ref().rpc('mining.set_difficulty', [settings.POOL_TARGET_INITIAL, ], is_notification=True)
+        else:
+            self.connection_ref().rpc('mining.set_difficulty', [settings.POOL_TARGET, ], is_notification=True)
         # self.connection_ref().rpc('client.get_version', [])
         
         # Force client to remove previous jobs if any (eg. from previous connection)
