@@ -123,21 +123,24 @@ INSTANCE_ID = 31		# Used for extranonce and needs to be 0-31
 # ******************** Pool Difficulty Settings *********************
 #  Again, Don't change unless you know what this is for.
 
+VDIFF_X2_TYPE = True  # powers of 2 e.g. 2,4,8,16,32,64,128,256,512,1024
+VDIFF_FLOAT = False    # Use float difficulty
+
 # Pool Target (Base Difficulty)
-POOL_TARGET = 16			# Pool-wide difficulty target int >= 1
+POOL_TARGET = 32			# Pool-wide difficulty target int >= 1
 
 # Variable Difficulty Enable
-VARIABLE_DIFF = False		# Master variable difficulty enable
+VARIABLE_DIFF = True		# Master variable difficulty enable
 
 # Variable diff tuning variables
 #VARDIFF will start at the POOL_TARGET. It can go as low as the VDIFF_MIN and as high as min(VDIFF_MAX or Liteconin's difficulty)
 USE_LITECOIN_DIFF = False   # Set the maximum difficulty to the litecoin difficulty. 
 DIFF_UPDATE_FREQUENCY = 86400 # Update the litecoin difficulty once a day for the VARDIFF maximum
-VDIFF_MIN_TARGET = 15		#  Minimum Target difficulty 
-VDIFF_MAX_TARGET = 1000		# Maximum Target difficulty 
-VDIFF_TARGET_TIME = 30		# Target time per share (i.e. try to get 1 share per this many seconds)
+VDIFF_MIN_TARGET = 16		#  Minimum Target difficulty 
+VDIFF_MAX_TARGET = 1024		# Maximum Target difficulty 
+VDIFF_TARGET_TIME = 15		# Target time per share (i.e. try to get 1 share per this many seconds)
 VDIFF_RETARGET_TIME = 120		# Check to see if we should retarget this often
-VDIFF_VARIANCE_PERCENT = 20	# Allow average time to very this % from target without retarget
+VDIFF_VARIANCE_PERCENT = 30	# Allow average time to very this % from target without retarget
 #### Advanced Option #####
 # For backwards compatibility, we send the scrypt hash to the solutions column in the shares table
 # For block confirmation, we have an option to send the block hash in
