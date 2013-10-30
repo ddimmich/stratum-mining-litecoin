@@ -39,7 +39,7 @@ DEBUG = False
 LOGDIR = 'log/'
 
 # Main application log file.
-LOGFILE = None		# eg. 'stratum.log'
+LOGFILE = "stratum.log"		# eg. 'stratum.log'
 
 # Possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL
 LOGLEVEL = 'INFO'
@@ -90,7 +90,7 @@ DB_MYSQL_PASS = '**empty**'
 #  Don't change these unless you know what you are doing
 
 DB_LOADER_CHECKTIME = 15	# How often we check to see if we should run the loader
-DB_LOADER_REC_MIN = 10		# Min Records before the bulk loader fires
+DB_LOADER_REC_MIN = 1		# Min Records before the bulk loader fires
 DB_LOADER_REC_MAX = 50		# Max Records the bulk loader will commit at a time
 
 DB_LOADER_FORCE_TIME = 300      # How often the cache should be flushed into the DB regardless of size.
@@ -127,13 +127,26 @@ INSTANCE_ID = 31		# Used for extranonce and needs to be 0-31
 POOL_TARGET = 16			# Pool-wide difficulty target int >= 1
 
 # Variable Difficulty Enable
-VARIABLE_DIFF = True		# Master variable difficulty enable
+VARIABLE_DIFF = False		# Master variable difficulty enable
 
 # Variable diff tuning variables
 #VARDIFF will start at the POOL_TARGET. It can go as low as the VDIFF_MIN and as high as min(VDIFF_MAX or Liteconin's difficulty)
+USE_LITECOIN_DIFF = False   # Set the maximum difficulty to the litecoin difficulty. 
 DIFF_UPDATE_FREQUENCY = 86400 # Update the litecoin difficulty once a day for the VARDIFF maximum
 VDIFF_MIN_TARGET = 15		#  Minimum Target difficulty 
 VDIFF_MAX_TARGET = 1000		# Maximum Target difficulty 
 VDIFF_TARGET_TIME = 30		# Target time per share (i.e. try to get 1 share per this many seconds)
 VDIFF_RETARGET_TIME = 120		# Check to see if we should retarget this often
 VDIFF_VARIANCE_PERCENT = 20	# Allow average time to very this % from target without retarget
+#### Advanced Option #####
+# For backwards compatibility, we send the scrypt hash to the solutions column in the shares table
+# For block confirmation, we have an option to send the block hash in
+# Please make sure your front end is compatible with the block hash in the solutions table.
+SOLUTION_BLOCK_HASH = False # If enabled, send the block hash. If false send the scrypt hash in the shares table
+
+# ******************** Admin settings *********************
+
+# Use scripts/generateAdminHash.sh <password> to generate the hash
+# for calculating SHA256 of your preferred password
+ADMIN_PASSWORD_SHA256 = 'password hash' # SHA256 of the password
+

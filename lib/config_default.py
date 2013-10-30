@@ -27,7 +27,7 @@ LOG_RETENTION = 10 # Keep 10 Logs
 # How many threads use for synchronous methods (services).
 # 30 is enough for small installation, for real usage
 # it should be slightly more, say 100-300.
-THREAD_POOL_SIZE = 100
+THREAD_POOL_SIZE = 300
 
 # RPC call throws TimeoutServiceException once total time since request has been
 # placed (time to delivery to client + time for processing on the client)
@@ -171,10 +171,31 @@ VARIABLE_DIFF = False        # Master variable difficulty enable
 
 # Variable diff tuning variables
 #VARDIFF will start at the POOL_TARGET. It can go as low as the VDIFF_MIN and as high as min(VDIFF_MAX or Liteconin's difficulty)
+USE_LITECOIN_DIFF = False   # Set the maximum difficulty to the litecoin difficulty.
 DIFF_UPDATE_FREQUENCY = 86400 # Update the litecoin difficulty once a day for the VARDIFF maximum
 VDIFF_MIN_TARGET = 15       #  Minimum Target difficulty
 VDIFF_MAX_TARGET = 1000     # Maximum Target difficulty
 VDIFF_TARGET_TIME = 30      # Target time per share (i.e. try to get 1 share per this many seconds)
 VDIFF_RETARGET_TIME = 120       # Check to see if we should retarget this often
 VDIFF_VARIANCE_PERCENT = 20 # Allow average time to very this % from target without retarget
+
+#### Advanced Option #####
+# For backwards compatibility, we send the scrypt hash to the solutions column in the shares table
+# For block confirmation, we have an option to send the block hash in
+# Please make sure your front end is compatible with the block hash in the solutions table.
+SOLUTION_BLOCK_HASH = False # If enabled, send the block hash. If false send the scrypt hash in the shares table
+
+# ******************** Adv. DB Settings *********************
+#  Don't change these unless you know what you are doing
+
+DB_LOADER_CHECKTIME = 15    # How often we check to see if we should run the loader
+DB_LOADER_REC_MIN = 1       # Min Records before the bulk loader fires
+DB_LOADER_REC_MAX = 50      # Max Records the bulk loader will commit at a time
+
+DB_LOADER_FORCE_TIME = 300      # How often the cache should be flushed into the DB regardless of size.
+
+DB_STATS_AVG_TIME = 300     # When using the DATABASE_EXTEND option, average speed over X sec
+                #   Note: this is also how often it updates
+DB_USERCACHE_TIME = 600     # How long the usercache is good for before we refresh
+
 

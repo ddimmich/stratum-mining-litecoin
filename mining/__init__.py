@@ -41,8 +41,11 @@ def setup(on_startup):
             result = (yield bitcoin_rpc.getblocktemplate())
             if isinstance(result, dict):
                 # litecoind implements version 1 of getblocktemplate
-                if result['version'] == 1 or result['version'] == 2:
+                if result['version'] >= 1:
                     break
+                else:
+                    log.error("Block Version mismatch: %s" % result['version'])
+
 
         except ConnectionRefusedError, e:
             log.error("Connection refused while trying to connect to litecoin (are your LITECOIN_TRUSTED_* settings correct?)")
