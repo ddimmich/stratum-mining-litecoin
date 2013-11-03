@@ -122,13 +122,13 @@ class BasicShareLimiter(object):
                 ddiff = 0.5
                 # Don't drop below POOL_TARGET
                 if (ddiff * current_difficulty) < settings.VDIFF_MIN_TARGET:
-                    ddiff = settings.VDIFF_MIN_TARGET / current_difficulty
+                       ddiff = settings.VDIFF_MIN_TARGET / current_difficulty
             else:
                 if ddiff > -1:
                     ddiff = -1
 	        # Don't drop below POOL_TARGET
-	        if (ddiff + current_difficulty) < settings.POOL_TARGET:
-		    ddiff = settings.VDIFF_MIN_TARGET - current_difficulty
+	        if (ddiff + current_difficulty) < settings.VDIFF_MIN_TARGET:
+                   ddiff = settings.VDIFF_MIN_TARGET - current_difficulty
         elif avg < self.tmin:
             # For fractional 0.1 ddiff's just up by 1
             if settings.VDIFF_X2_TYPE:
@@ -171,6 +171,7 @@ class BasicShareLimiter(object):
         session['prev_diff'] = session['difficulty']
         session['prev_jobid'] = job_id
         session['difficulty'] = new_diff
+        session['prev_ts'] = Interfaces.timestamper.time()
         connection_ref().rpc('mining.set_difficulty', [new_diff, ], is_notification=True)
         dbi.update_worker_diff(worker_name, new_diff)
 
