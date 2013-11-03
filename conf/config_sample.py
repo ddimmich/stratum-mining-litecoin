@@ -141,12 +141,12 @@ VDIFF_MAX_TARGET = 1024		# Maximum Target difficulty
 VDIFF_TARGET_TIME = 15		# Target time per share (i.e. try to get 1 share per this many seconds)
 VDIFF_RETARGET_TIME = 120		# Check to see if we should retarget this often
 VDIFF_VARIANCE_PERCENT = 30	# Allow average time to very this % from target without retarget
-VDIFF_RETARGET_DELAY = 25   # Wait this many seconds before applying new variable difficulty target
+VDIFF_RETARGET_DELAY = 30   # Wait this many seconds before applying new variable difficulty target
 #### Advanced Option #####
 # For backwards compatibility, we send the scrypt hash to the solutions column in the shares table
 # For block confirmation, we have an option to send the block hash in
 # Please make sure your front end is compatible with the block hash in the solutions table.
-SOLUTION_BLOCK_HASH = False # If enabled, send the block hash. If false send the scrypt hash in the shares table
+SOLUTION_BLOCK_HASH = True # If enabled, send the block hash. If false send the scrypt hash in the shares table
 
 # ******************** Admin settings *********************
 

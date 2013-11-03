@@ -88,6 +88,7 @@ class MiningService(GenericService):
             raise SubmitException("Connection is not subscribed for mining")
         
         difficulty = session['difficulty']
+        s_difficulty = difficulty
         submit_time = Interfaces.timestamper.time()
         ip = self.connection_ref()._get_ip()
 
@@ -101,7 +102,7 @@ class MiningService(GenericService):
         # and it is valid proof of work.
         try:
             (block_header, block_hash, share_diff, on_submit) = Interfaces.template_registry.submit_share(job_id,
-                worker_name, session, extranonce1_bin, extranonce2, ntime, nonce, difficulty)
+                worker_name, session, extranonce1_bin, extranonce2, ntime, nonce, s_difficulty)
         except SubmitException as e:
             # block_header and block_hash are None when submitted data are corrupted
             Interfaces.share_manager.on_submit_share(worker_name, False, False, difficulty,
