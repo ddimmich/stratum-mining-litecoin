@@ -68,7 +68,7 @@ class MiningService(GenericService):
         session = self.connection_ref().get_session()
         session['extranonce1'] = extranonce1
         session['difficulty'] = settings.POOL_TARGET  # Following protocol specs, default diff is 1
-
+        session['status'] = (0, 0, False, Interfaces.timestamper.time())  # (valid, invalid, is_banned, timestamp)
         return Pubsub.subscribe(self.connection_ref(), MiningSubscription()) + (extranonce1_hex, extranonce2_size)
         
     def submit(self, worker_name, job_id, extranonce2, ntime, nonce):
@@ -91,6 +91,24 @@ class MiningService(GenericService):
         s_difficulty = difficulty
         submit_time = Interfaces.timestamper.time()
         ip = self.connection_ref()._get_ip()
+        (valid, invalid, is_banned, last_ts) = session['status']
+        log.debug("%s: valid: %i invalid: %i banned: %s last_ts: %d" % (worker_name, valid, invalid, is_banned, last_ts))
+
+        if is_banned and submit_time - last_ts > settings.WORKER_BAN_TIME:
+            (valid, invalid, is_banned, last_ts) = (0, 0, False, Interfaces.timestamper.time())
+            log.debug("Clearing ban for worker: %s" % worker_name)
+
+        if is_banned:
+            raise SubmitException("Worker is temporarily banned")
+
+        if submit_time - last_ts > settings.WORKER_CACHE_TIME and not is_banned:
+            percent = float(float(invalid) / float(valid) * 100)
+            if percent > settings.INVALID_SHARES_PERCENT and settings.ENABLE_WORKER_BANNING:
+                (is_banned, last_ts) = (True, Interfaces.timestamper.time())
+                log.debug("Worker invalid percent: %0.2f Banning worker: %s" % (percent, worker_name))
+            else: 
+                (valid, invalid, last_ts) = (0, 0, Interfaces.timestamper.time())
+                log.debug("Clearing worker stats for: %s" % worker_name)
 
         if 'prev_ts' in session and (submit_time - session['prev_ts']) < settings.VDIFF_RETARGET_DELAY:
             difficulty = session['prev_diff'] or session['difficulty'] or settings.POOL_TARGET            
@@ -106,12 +124,16 @@ class MiningService(GenericService):
         except SubmitException as e:
             # block_header and block_hash are None when submitted data are corrupted
             Interfaces.share_manager.on_submit_share(worker_name, False, False, difficulty,
-                submit_time, False, ip, e[0], 0)    
+                submit_time, False, ip, e[0], 0)
+            invalid += 1
+            session['status'] = (valid, invalid, is_banned, last_ts)    
             raise
             
              
         Interfaces.share_manager.on_submit_share(worker_name, block_header,
             block_hash, difficulty, submit_time, True, ip, '', share_diff)
+        valid += 1
+        session['status'] = (valid, invalid, is_banned, last_ts)
         
         if on_submit != None:
             # Pool performs submitblock() to litecoind. Let's hook
