@@ -92,27 +92,27 @@ class MiningService(GenericService):
         submit_time = Interfaces.timestamper.time()
         ip = self.connection_ref()._get_ip()
         (valid, invalid, is_banned, last_ts) = session['status']
-        log.debug("%s: valid: %i invalid: %i banned: %s last_ts: %d" % (worker_name, valid, invalid, is_banned, last_ts))
+        percent = float(float(invalid) / (float(valid) if valid else 1) * 100)
 
         if is_banned and submit_time - last_ts > settings.WORKER_BAN_TIME:
-            (valid, invalid, is_banned, last_ts) = (0, 0, False, Interfaces.timestamper.time())
-            log.debug("Clearing ban for worker: %s" % worker_name)
-
-        if is_banned:
-            raise SubmitException("Worker is temporarily banned")
+            if percent > settings.INVALID_SHARES_PERCENT:
+                log.debug("Worker invalid percent: %0.2f %s STILL BANNED!" % (percent, worker_name))
+            else: 
+                is_banned = False
+                log.debug("Clearing ban for worker: %s UNBANNED" % worker_name)
+            (valid, invalid, is_banned, last_ts) = (0, 0, is_banned, Interfaces.timestamper.time())
 
         if submit_time - last_ts > settings.WORKER_CACHE_TIME and not is_banned:
-            percent = float(float(invalid) / float(valid) * 100)
             if percent > settings.INVALID_SHARES_PERCENT and settings.ENABLE_WORKER_BANNING:
-                (is_banned, last_ts) = (True, Interfaces.timestamper.time())
-                log.debug("Worker invalid percent: %0.2f Banning worker: %s" % (percent, worker_name))
-            else: 
-                (valid, invalid, last_ts) = (0, 0, Interfaces.timestamper.time())
+                is_banned = True
+                log.debug("Worker invalid percent: %0.2f %s BANNED!" % (percent, worker_name))
+            else:
                 log.debug("Clearing worker stats for: %s" % worker_name)
+            (valid, invalid, is_banned, last_ts) = (0, 0, is_banned, Interfaces.timestamper.time())
 
         if 'prev_ts' in session and (submit_time - session['prev_ts']) < settings.VDIFF_RETARGET_DELAY:
             difficulty = session['prev_diff'] or session['difficulty'] or settings.POOL_TARGET            
-        log.debug("Worker: %s current difficulty: %i" % (worker_name, difficulty))
+        log.debug("%s: (%d, %d, %s, %d) %0.2f%% diff(%d)" % (worker_name, valid, invalid, is_banned, last_ts, percent, difficulty)) 
     
         Interfaces.share_limiter.submit(self.connection_ref, job_id, difficulty, submit_time, worker_name)
             
@@ -123,18 +123,25 @@ class MiningService(GenericService):
                 worker_name, session, extranonce1_bin, extranonce2, ntime, nonce, s_difficulty)
         except SubmitException as e:
             # block_header and block_hash are None when submitted data are corrupted
-            Interfaces.share_manager.on_submit_share(worker_name, False, False, difficulty,
-                submit_time, False, ip, e[0], 0)
             invalid += 1
-            session['status'] = (valid, invalid, is_banned, last_ts)    
+            session['status'] = (valid, invalid, is_banned, last_ts)
+
+            if is_banned:
+                raise SubmitException("Worker is temporarily banned")
+ 
+            Interfaces.share_manager.on_submit_share(worker_name, False, False, difficulty,
+                submit_time, False, ip, e[0], 0)    
             raise
             
-             
-        Interfaces.share_manager.on_submit_share(worker_name, block_header,
-            block_hash, difficulty, submit_time, True, ip, '', share_diff)
         valid += 1
         session['status'] = (valid, invalid, is_banned, last_ts)
-        
+
+        if is_banned:
+            raise SubmitException("Worker is temporarily banned")
+ 
+        Interfaces.share_manager.on_submit_share(worker_name, block_header,
+            block_hash, difficulty, submit_time, True, ip, '', share_diff)
+
         if on_submit != None:
             # Pool performs submitblock() to litecoind. Let's hook
             # to result and report it to share manager

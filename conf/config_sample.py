@@ -144,9 +144,9 @@ VDIFF_VARIANCE_PERCENT = 30	# Allow average time to very this % from target with
 VDIFF_RETARGET_DELAY = 30   # Wait this many seconds before applying new variable difficulty target
 
 # ******************** Worker Ban Options *********************
-ENABLE_WORKER_BANNING = True # enable/disable temporary worker banning 
-WORKER_CACHE_TIME = 600    # How long the worker stats cache is good before we check and refresh
-WORKER_BAN_TIME = 300    # How long we temporarily ban worker
+ENABLE_WORKER_BANNING = True  # enable/disable temporary worker banning 
+WORKER_CACHE_TIME = 600       # How long the worker stats cache is good before we check and refresh
+WORKER_BAN_TIME = 300         # How long we temporarily ban worker
 INVALID_SHARES_PERCENT = 50	  # Allow average invalid shares vary this % before we ban
 
 #### Advanced Option #####
