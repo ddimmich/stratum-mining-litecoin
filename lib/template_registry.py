@@ -166,7 +166,7 @@ class TemplateRegistry(object):
         return j
         
     def submit_share(self, job_id, worker_name, session, extranonce1_bin, extranonce2, ntime, nonce,
-                     difficulty):
+                     difficulty, submit_time):
         '''Check parameters and finalize block template. If it leads
            to valid block candidate, asynchronously submits the block
            back to the bitcoin network.
@@ -235,6 +235,10 @@ class TemplateRegistry(object):
 		( 'prev_jobid' not in session or session['prev_jobid'] < job_id \
 		or 'prev_diff' not in session or hash_int > self.diff_to_target(session['prev_diff']) ):
             raise SubmitException("Share is above target")
+
+        if hash_int > target_user and 'prev_ts' in session \
+        and (submit_time - session['prev_ts']) > settings.VDIFF_RETARGET_REJECT_TIME:
+            raise SubmitException("Stale-share above target")
 
         # Mostly for debugging purposes
         target_info = self.diff_to_target(100000)
