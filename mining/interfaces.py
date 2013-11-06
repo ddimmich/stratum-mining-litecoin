@@ -17,6 +17,8 @@ dbi.init_main()
 
 class WorkerManagerInterface(object):
     def __init__(self):
+        self.worker_log = {}
+        self.worker_log.setdefault('authorized', {})
         return
         
     def authorize(self, worker_name, worker_password):

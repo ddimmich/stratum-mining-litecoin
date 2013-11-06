@@ -51,10 +51,14 @@ class MiningService(GenericService):
         
         if Interfaces.worker_manager.authorize(worker_name, worker_password):
             session['authorized'][worker_name] = worker_password
+            # worker_log = (valid, invalid, is_banned, timestamp)
+            Interfaces.worker_manager.worker_log['authorized'][worker_name] = (0, 0, False, Interfaces.timestamper.time())
             return True
         else:
             if worker_name in session['authorized']:
                 del session['authorized'][worker_name]
+            if worker_name in Interfaces.worker_manager.worker_log['authorized']:
+                del Interfaces.worker_manager.worker_log['authorized'][worker_name]
             return False
         
     def subscribe(self, *args):
@@ -68,7 +72,6 @@ class MiningService(GenericService):
         session = self.connection_ref().get_session()
         session['extranonce1'] = extranonce1
         session['difficulty'] = settings.POOL_TARGET  # Following protocol specs, default diff is 1
-        session['status'] = (0, 0, False, Interfaces.timestamper.time())  # (valid, invalid, is_banned, timestamp)
         return Pubsub.subscribe(self.connection_ref(), MiningSubscription()) + (extranonce1_hex, extranonce2_size)
         
     def submit(self, worker_name, job_id, extranonce2, ntime, nonce):
@@ -91,7 +94,7 @@ class MiningService(GenericService):
         s_difficulty = difficulty
         submit_time = Interfaces.timestamper.time()
         ip = self.connection_ref()._get_ip()
-        (valid, invalid, is_banned, last_ts) = session['status']
+        (valid, invalid, is_banned, last_ts) = Interfaces.worker_manager.worker_log['authorized'][worker_name]
         percent = float(float(invalid) / (float(valid) if valid else 1) * 100)
 
         if is_banned and submit_time - last_ts > settings.WORKER_BAN_TIME:
@@ -112,7 +115,7 @@ class MiningService(GenericService):
 
         if 'prev_ts' in session and (submit_time - session['prev_ts']) < settings.VDIFF_RETARGET_DELAY:
             difficulty = session['prev_diff'] or session['difficulty'] or settings.POOL_TARGET            
-        log.debug("%s: (%d, %d, %s, %d) %0.2f%% diff(%d)" % (worker_name, valid, invalid, is_banned, last_ts, percent, difficulty)) 
+        log.debug("%s (%d, %d, %s, %d) %0.2f%% diff(%f)" % (worker_name, valid, invalid, is_banned, last_ts, percent, difficulty)) 
     
         Interfaces.share_limiter.submit(self.connection_ref, job_id, difficulty, submit_time, worker_name)
             
@@ -124,7 +127,7 @@ class MiningService(GenericService):
         except SubmitException as e:
             # block_header and block_hash are None when submitted data are corrupted
             invalid += 1
-            session['status'] = (valid, invalid, is_banned, last_ts)
+            Interfaces.worker_manager.worker_log['authorized'][worker_name] = (valid, invalid, is_banned, last_ts)
 
             if is_banned:
                 raise SubmitException("Worker is temporarily banned")
@@ -134,7 +137,7 @@ class MiningService(GenericService):
             raise
             
         valid += 1
-        session['status'] = (valid, invalid, is_banned, last_ts)
+        Interfaces.worker_manager.worker_log['authorized'][worker_name] = (valid, invalid, is_banned, last_ts)
 
         if is_banned:
             raise SubmitException("Worker is temporarily banned")
