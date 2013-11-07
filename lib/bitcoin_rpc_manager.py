@@ -123,6 +123,13 @@ class BitcoinRPCManager(object):
 		return self.conns[self.curr_conn].validateaddress(address)
 	    except:
 		self.next_connection()
+
+    def validatepubkey(self, pubkey):
+	while True:
+	    try:
+		return self.conns[self.curr_conn].validatepubkey(pubkey)
+	    except:
+		self.next_connection()
 	
 
     def getdifficulty(self):

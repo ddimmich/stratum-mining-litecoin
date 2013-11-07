@@ -2,7 +2,6 @@ import weakref
 import binascii
 import util
 import StringIO
-import ltc_scrypt
 
 from twisted.internet import defer
 from lib.exceptions import SubmitException
@@ -13,7 +12,10 @@ log = lib.logger.get_logger('template_registry')
 from mining.interfaces import Interfaces
 from extranonce_counter import ExtranonceCounter
 import lib.settings as settings
-
+if settings.MAIN_COIN_ALGORITHM == 'scrypt':
+    import ltc_scrypt
+elif settings.MAIN_COIN_ALGORITHM  == 'scrypt-jane':
+    import yac_scrypt
 
 class JobIdGenerator(object):
     '''Generate pseudo-unique job_id. It does not need to be absolutely unique,
@@ -223,13 +225,18 @@ class TemplateRegistry(object):
         header_bin = job.serialize_header(merkle_root_int, ntime_bin, nonce_bin)
     
         # 4. Reverse header and compare it with target of the user
-        hash_bin = ltc_scrypt.getPoWHash(''.join([ header_bin[i*4:i*4+4][::-1] for i in range(0, 20) ]))
+        if settings.MAIN_COIN_ALGORITHM == 'scrypt':
+            hash_bin = ltc_scrypt.getPoWHash(''.join([ header_bin[i*4:i*4+4][::-1] for i in range(0, 20) ]))
+        elif settings.MAIN_COIN_ALGORITHM  == 'scrypt-jane':
+            hash_bin = yac_scrypt.getPoWHash(''.join([ header_bin[i*4:i*4+4][::-1] for i in range(0, 20) ]), int(ntime, 16))
+        else:
+            hash_bin = util.doublesha(''.join([ header_bin[i*4:i*4+4][::-1] for i in range(0, 20) ]))
         hash_int = util.uint256_from_str(hash_bin)
         scrypt_hash_hex = "%064x" % hash_int
         header_hex = binascii.hexlify(header_bin)
-        header_hex = header_hex+"000000800000000000000000000000000000000000000000000000000000000000000000000000000000000080020000"
-        
-                 
+        if not settings.MAIN_COIN_ALGORITHM == 'sha256':
+            header_hex = header_hex+"000000800000000000000000000000000000000000000000000000000000000000000000000000000000000080020000"
+                         
         target_user = self.diff_to_target(difficulty)        
         if hash_int > target_user and \
 		( 'prev_jobid' not in session or session['prev_jobid'] < job_id \
@@ -247,7 +254,6 @@ class TemplateRegistry(object):
 
         # Algebra tells us the diff_to_target is the same as hash_to_diff
         share_diff = int(self.diff_to_target(hash_int))
-
 
         # 5. Compare hash with target of the network        
         if hash_int <= job.target:
@@ -267,16 +273,20 @@ class TemplateRegistry(object):
                             
             # 7. Submit block to the network
             serialized = binascii.hexlify(job.serialize())
-            on_submit = self.bitcoin_rpc.submitblock(serialized, block_hash_hex)
+            if settings.MAIN_COIN_TYPE == 'proof-of-work':
+                on_submit = self.bitcoin_rpc.submitblock(serialized, block_hash_hex)
+            else:
+                on_submit = self.bitcoin_rpc.submitblock(serialized, scrypt_hash_hex)
+            
             if on_submit:
                 self.update_block()
 
-            if settings.SOLUTION_BLOCK_HASH:
+            if settings.SOULTION_BLOCK_HASH:
                 return (header_hex, block_hash_hex, share_diff, on_submit)
             else:
                 return (header_hex, scrypt_hash_hex, share_diff, on_submit)
         
-        if settings.SOLUTION_BLOCK_HASH:
+        if settings.SOULTION_BLOCK_HASH:
         # Reverse the header and get the potential block hash (for scrypt only) only do this if we want to send in the block hash to the shares table
             block_hash_bin = util.doublesha(''.join([ header_bin[i*4:i*4+4][::-1] for i in range(0, 20) ]))
             block_hash_hex = block_hash_bin[::-1].encode('hex_codec')

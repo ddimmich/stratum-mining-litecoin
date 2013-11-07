@@ -42,17 +42,20 @@ class BitcoinRPC(object):
     @defer.inlineCallbacks
     def submitblock(self, block_hex, block_hash_hex):
         # Try submitblock if that fails, go to getblocktemplate
+        log.debug("Submit block_hex: %s" % block_hex)
+        log.debug("Submit block_hex_hash: %s" % block_hash_hex)
         try:
             resp = (yield self._call('submitblock', [block_hex,]))
         except Exception:
-            try: 
+            try:
                 resp = (yield self._call('getblocktemplate', [{'mode': 'submit', 'data': block_hex}]))
             except Exception as e:
                 log.exception("Problem Submitting block %s" % str(e))
                 raise
 
         if json.loads(resp)['result'] == None:
-            # make sure the block was created. 
+            # make sure the block was created.
+            log.debug("Submit Result: %s" % json.loads(resp)['result']) 
             defer.returnValue((yield self.blockexists(block_hash_hex)))
         else:
             defer.returnValue(False)
@@ -82,6 +85,11 @@ class BitcoinRPC(object):
         defer.returnValue(json.loads(resp)['result'])
 
     @defer.inlineCallbacks
+    def validatepubkey(self, pubkey):
+        resp = (yield self._call('validatepubkey', [pubkey,]))
+        defer.returnValue(json.loads(resp)['result'])
+
+    @defer.inlineCallbacks
     def getdifficulty(self):
         resp = (yield self._call('getdifficulty', []))
         defer.returnValue(json.loads(resp)['result'])
@@ -89,7 +97,8 @@ class BitcoinRPC(object):
     @defer.inlineCallbacks
     def blockexists(self, block_hash_hex):
         resp = (yield self._call('getblock', [block_hash_hex,]))
-        if "hash" in json.loads(resp)['result'] and json.loads(resp)['result']['hash'] == block_hash_hex:
+        log.debug("RPC Getblock Result: %s" % json.loads(resp)['result'])
+        if 'hash' in json.loads(resp)['result'] and json.loads(resp)['result']['hash'] == block_hash_hex:
             log.debug("Block Confirmed: %s" % block_hash_hex)
             defer.returnValue(True)
         else:
