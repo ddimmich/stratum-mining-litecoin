@@ -39,7 +39,7 @@ class CoinbaseTransaction(halfnode.CTransaction):
         self.vout.append(tx_out)
         
         # Two parts of serialized coinbase, just put part1 + extranonce + part2 to have final serialized tx
-        self._serialized = super(CoinbaseTransactionPos, self).serialize().split(self.extranonce_placeholder)
+        self._serialized = super(CoinbaseTransaction, self).serialize().split(self.extranonce_placeholder)
 
     def set_extranonce(self, extranonce):
         if len(extranonce) != self.extranonce_size:
@@ -85,7 +85,7 @@ class CoinbaseTransactionPos(halfnode.CTransaction):
         self.vout.append(tx_out)
         
         # Two parts of serialized coinbase, just put part1 + extranonce + part2 to have final serialized tx
-        self._serialized = super(CoinbaseTransaction, self).serialize().split(self.extranonce_placeholder)
+        self._serialized = super(CoinbaseTransactionPos, self).serialize().split(self.extranonce_placeholder)
 
     def set_extranonce(self, extranonce):
         if len(extranonce) != self.extranonce_size:

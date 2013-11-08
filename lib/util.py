@@ -215,3 +215,10 @@ def script_to_address(addr):
         raise ValueError('invalid address')
     (ver, pubkeyhash) = d
     return b'\x76\xa9\x14' + pubkeyhash + b'\x88\xac'
+
+def script_to_pubkey(key):
+    if len(key) == 66:
+        key = binascii.unhexlify(key)
+    if len(key) != 33:
+        raise Exception('Invalid Public Key: Check CENTRAL_WALLET')
+    return b'\x21' + key + b'\xac'
