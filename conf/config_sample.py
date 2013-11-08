@@ -6,8 +6,14 @@ This is already setup with sane values for solomining.
 You NEED to set the parameters in BASIC SETTINGS
 '''
 
+# ******************** MASTER SETTINGS ***************
+
+MAIN_COIN_ALGORITHM = 'scrypt'    # Main coin algorithm options: 'scrypt' or 'scrypt-jane' or 'sha256'
+MAIN_COIN_TYPE = 'proof-of-work' # Main coin type options: 'proof-of-work' or 'proof-of-stake'
+
 # ******************** BASIC SETTINGS ***************
 # These are the MUST BE SET parameters!
+# NOTE: a proof-of-stake coin generally uses a getnewpubkey address
 
 CENTRAL_WALLET = 'set_valid_addresss_in_config!'	# local litecoin address where money goes
 
@@ -145,7 +151,7 @@ VDIFF_RETARGET_DELAY = 30         # Wait this many seconds before applying new v
 VDIFF_RETARGET_REJECT_TIME = 60   # Wait this many seconds before rejecting old difficulty shares
 
 # ******************** Worker Ban Options *********************
-ENABLE_WORKER_BANNING = True  # enable/disable temporary worker banning 
+ENABLE_WORKER_BANNING = False # enable/disable temporary worker banning 
 WORKER_CACHE_TIME = 600       # How long the worker stats cache is good before we check and refresh
 WORKER_BAN_TIME = 300         # How long we temporarily ban worker
 INVALID_SHARES_PERCENT = 50	  # Allow average invalid shares vary this % before we ban
@@ -154,6 +160,7 @@ INVALID_SHARES_PERCENT = 50	  # Allow average invalid shares vary this % before 
 # For backwards compatibility, we send the scrypt hash to the solutions column in the shares table
 # For block confirmation, we have an option to send the block hash in
 # Please make sure your front end is compatible with the block hash in the solutions table.
+# Usually 'scrypt' proof-of-stake coins use the scrypt hash in the shares table 
 SOLUTION_BLOCK_HASH = True # If enabled, send the block hash. If false send the scrypt hash in the shares table
 
 # ******************** Admin settings *********************

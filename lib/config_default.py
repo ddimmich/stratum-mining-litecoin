@@ -178,6 +178,14 @@ VDIFF_MAX_TARGET = 1000     # Maximum Target difficulty
 VDIFF_TARGET_TIME = 30      # Target time per share (i.e. try to get 1 share per this many seconds)
 VDIFF_RETARGET_TIME = 120       # Check to see if we should retarget this often
 VDIFF_VARIANCE_PERCENT = 20 # Allow average time to very this % from target without retarget
+VDIFF_RETARGET_DELAY = 30         # Wait this many seconds before applying new variable difficulty target
+VDIFF_RETARGET_REJECT_TIME = 60   # Wait this many seconds before rejecting old difficulty shares
+
+# ******************** Worker Ban Options *********************
+ENABLE_WORKER_BANNING = False  # enable/disable temporary worker banning 
+WORKER_CACHE_TIME = 600       # How long the worker stats cache is good before we check and refresh
+WORKER_BAN_TIME = 300         # How long we temporarily ban worker
+INVALID_SHARES_PERCENT = 50	  # Allow average invalid shares vary this % before we ban
 
 #### Advanced Option #####
 # For backwards compatibility, we send the scrypt hash to the solutions column in the shares table

@@ -18,6 +18,7 @@ from util import *
 import ltc_scrypt
 import lib.logger
 log = lib.logger.get_logger('halfnode')
+import settings
 
 MY_VERSION = 31402
 MY_SUBVERSION = ".4"
@@ -132,12 +133,16 @@ class CTxOut(object):
 class CTransaction(object):
     def __init__(self):
         self.nVersion = 1
+        if settings.MAIN_COIN_TYPE == 'proof-of-stake':
+            self.nTime = 0
         self.vin = []
         self.vout = []
         self.nLockTime = 0
         self.sha256 = None
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
+        if settings.MAIN_COIN_TYPE == 'proof-of-stake':
+            self.nTime = struct.unpack("<i", f.read(4))[0]
         self.vin = deser_vector(f, CTxIn)
         self.vout = deser_vector(f, CTxOut)
         self.nLockTime = struct.unpack("<I", f.read(4))[0]
@@ -145,6 +150,8 @@ class CTransaction(object):
     def serialize(self):
         r = ""
         r += struct.pack("<i", self.nVersion)
+        if settings.MAIN_COIN_TYPE == 'proof-of-stake':
+            r += struct.pack("<i", self.nTime)
         r += ser_vector(self.vin)
         r += ser_vector(self.vout)
         r += struct.pack("<I", self.nLockTime)
@@ -175,6 +182,8 @@ class CBlock(object):
         self.vtx = []
         self.sha256 = None
         self.scrypt = None
+        if settings.MAIN_COIN_TYPE == 'proof-of-stake':
+            self.signature = b""
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
         self.hashPrevBlock = deser_uint256(f)
@@ -183,6 +192,8 @@ class CBlock(object):
         self.nBits = struct.unpack("<I", f.read(4))[0]
         self.nNonce = struct.unpack("<I", f.read(4))[0]
         self.vtx = deser_vector(f, CTransaction)
+        if settings.MAIN_COIN_TYPE == 'proof-of-stake':
+            self.signature = deser_string(f)
     def serialize(self):
         r = []
         r.append(struct.pack("<i", self.nVersion))
@@ -192,6 +203,8 @@ class CBlock(object):
         r.append(struct.pack("<I", self.nBits))
         r.append(struct.pack("<I", self.nNonce))
         r.append(ser_vector(self.vtx))
+        if settings.MAIN_COIN_TYPE == 'proof-of-stake':
+            r.append(ser_string(self.signature)) 
         return ''.join(r)
     def calc_sha256(self):
         if self.sha256 is None:
@@ -218,12 +231,17 @@ class CBlock(object):
         return self.scrypt
 
     def is_valid(self):
-        #self.calc_sha256()
-        self.calc_scrypt()
+        if settings.MAIN_COIN_ALGORITHM == 'sha256':
+            self.calc_sha256()
+        else:
+            self.calc_scrypt()
         target = uint256_from_compact(self.nBits)
-        #if self.sha256 > target:
-        if self.scrypt > target:
-            return False
+        if settings.MAIN_COIN_ALGORITHM == 'sha256':
+            if self.sha256 > target:
+                return False
+        else:
+            if self.scrypt > target:
+                return False
         hashes = []
         for tx in self.vtx:
             tx.sha256 = None

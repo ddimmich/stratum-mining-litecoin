@@ -23,7 +23,10 @@ class SimpleCoinbaser(object):
         self._validate()
 
     def _validate(self):
-        d = self.bitcoin_rpc.validateaddress(self.address)
+        if settings.MAIN_COIN_TYPE == 'proof-of-work':
+            d = self.bitcoin_rpc.validateaddress(self.address)
+        else:
+            d = self.bitcoin_rpc.validatepubkey(self.address)
         d.addCallback(self._address_check)
         d.addErrback(self._failure)
         
@@ -35,7 +38,7 @@ class SimpleCoinbaser(object):
             if not self.on_load.called:
                 self.on_load.callback(True)
 	
-	elif result['isvalid'] and settings.ALLOW_NONLOCAL_WALLET == True :
+        elif result['isvalid'] and settings.ALLOW_NONLOCAL_WALLET == True :
             self.is_valid = True
             log.warning("!!! Coinbase address '%s' is valid BUT it is not local" % self.address)
             
@@ -61,7 +64,10 @@ class SimpleCoinbaser(object):
             # Try again, maybe litecoind was down?
             self._validate()
             raise Exception("Coinbase address is not validated!")
-        return util.script_to_address(self.address)    
+        if settings.MAIN_COIN_TYPE == 'proof-of-work':
+            return util.script_to_address(self.address)
+        else:
+            return util.script_to_pubkey(self.address)    
                    
     def get_coinbase_data(self):
         return ''

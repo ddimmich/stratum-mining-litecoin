@@ -5,18 +5,24 @@ import struct
 import util
 import merkletree
 import halfnode
-from coinbasetx import CoinbaseTransaction
+import settings
+
+if settings.MAIN_COIN_TYPE == 'proof-of-work':
+    from coinbasetx import CoinbaseTransaction
+else:
+    from coinbasetx import CoinbaseTransactionPos
 
 # Remove dependency to settings, coinbase extras should be
 # provided from coinbaser
-import settings
 
 class BlockTemplate(halfnode.CBlock):
     '''Template is used for generating new jobs for clients.
     Let's iterate extranonce1, extranonce2, ntime and nonce
     to find out valid bitcoin block!'''
-    
-    coinbase_transaction_class = CoinbaseTransaction
+    if settings.MAIN_COIN_TYPE == 'proof-of-work':
+        coinbase_transaction_class = CoinbaseTransaction
+    else:
+        coinbase_transaction_class = CoinbaseTransactionPos
     
     def __init__(self, timestamper, coinbaser, job_id):
         super(BlockTemplate, self).__init__()
@@ -47,8 +53,13 @@ class BlockTemplate(halfnode.CBlock):
         txhashes = [None] + [ util.ser_uint256(int(t['hash'], 16)) for t in data['transactions'] ]
         mt = merkletree.MerkleTree(txhashes)
 
-        coinbase = self.coinbase_transaction_class(self.timestamper, self.coinbaser, data['coinbasevalue'],
+        if settings.MAIN_COIN_TYPE == 'proof-of-work':
+            coinbase = self.coinbase_transaction_class(self.timestamper, self.coinbaser, data['coinbasevalue'],
                         data['coinbaseaux']['flags'], data['height'], settings.COINBASE_EXTRAS)
+        else:
+            coinbase = self.coinbase_transaction_class(self.timestamper, self.coinbaser, data['coinbasevalue'],
+                        data['coinbaseaux']['flags'], data['height'], settings.COINBASE_EXTRAS, data['curtime'])
+
         
         self.height = data['height']
         self.nVersion = data['version']
