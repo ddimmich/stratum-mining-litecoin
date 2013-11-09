@@ -123,7 +123,7 @@ class MiningService(GenericService):
         and not is_ext_diff:
             difficulty = session['prev_diff'] or session['difficulty'] or settings.POOL_TARGET
             diff = difficulty
-        log.debug("%s (%d, %d, %s, %s, %d) %0.2f%% diff(%f)" % (worker_name, valid, invalid, is_banned, is_ext_diff, last_ts, percent, diff))
+        log.debug("%s (%d, %d, %s, %s, %d) %0.2f%% diff(%f)" % (worker_name, valid, invalid, is_banned, is_ext_diff, last_ts, percent, difficulty))
         if not is_ext_diff:    
             Interfaces.share_limiter.submit(self.connection_ref, job_id, difficulty, submit_time, worker_name)
             
