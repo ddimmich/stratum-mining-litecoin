@@ -25,6 +25,13 @@ class WorkerManagerInterface(object):
         # Important NOTE: This is called on EVERY submitted share. So you'll need caching!!!
         return dbi.check_password(worker_name, worker_password)
 
+    def get_user_difficulty(self, worker_name):
+        wd = dbi.get_user(worker_name)
+        if len(wd) > 6:
+            #dbi.update_worker_diff(worker_name, wd[6])
+            return (True, wd[6])
+        else:
+            return (False, settings.POOL_TARGET)
 
 class ShareLimiterInterface(object):
     '''Implement difficulty adjustments here'''

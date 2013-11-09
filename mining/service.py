@@ -51,8 +51,14 @@ class MiningService(GenericService):
         
         if Interfaces.worker_manager.authorize(worker_name, worker_password):
             session['authorized'][worker_name] = worker_password
-            # worker_log = (valid, invalid, is_banned, timestamp)
-            Interfaces.worker_manager.worker_log['authorized'][worker_name] = (0, 0, False, Interfaces.timestamper.time())
+            is_ext_diff = False
+            if settings.ALLOW_EXTERNAL_DIFFICULTY:
+                (is_ext_diff, session['difficulty']) = Interfaces.worker_manager.get_user_difficulty(worker_name)
+                self.connection_ref().rpc('mining.set_difficulty', [session['difficulty'], ], is_notification=True)
+            else:
+                session['difficulty'] = settings.POOL_TARGET
+            # worker_log = (valid, invalid, is_banned, diff, is_ext_diff, timestamp)
+            Interfaces.worker_manager.worker_log['authorized'][worker_name] = (0, 0, False, session['difficulty'], is_ext_diff, Interfaces.timestamper.time())            
             return True
         else:
             if worker_name in session['authorized']:
@@ -94,7 +100,7 @@ class MiningService(GenericService):
         s_difficulty = difficulty
         submit_time = Interfaces.timestamper.time()
         ip = self.connection_ref()._get_ip()
-        (valid, invalid, is_banned, last_ts) = Interfaces.worker_manager.worker_log['authorized'][worker_name]
+        (valid, invalid, is_banned, diff, is_ext_diff, last_ts) = Interfaces.worker_manager.worker_log['authorized'][worker_name]
         percent = float(float(invalid) / (float(valid) if valid else 1) * 100)
 
         if is_banned and submit_time - last_ts > settings.WORKER_BAN_TIME:
@@ -113,11 +119,13 @@ class MiningService(GenericService):
                 log.debug("Clearing worker stats for: %s" % worker_name)
             (valid, invalid, is_banned, last_ts) = (0, 0, is_banned, Interfaces.timestamper.time())
 
-        if 'prev_ts' in session and (submit_time - session['prev_ts']) < settings.VDIFF_RETARGET_DELAY:
-            difficulty = session['prev_diff'] or session['difficulty'] or settings.POOL_TARGET            
-        log.debug("%s (%d, %d, %s, %d) %0.2f%% diff(%f)" % (worker_name, valid, invalid, is_banned, last_ts, percent, difficulty)) 
-    
-        Interfaces.share_limiter.submit(self.connection_ref, job_id, difficulty, submit_time, worker_name)
+        if 'prev_ts' in session and (submit_time - session['prev_ts']) < settings.VDIFF_RETARGET_DELAY \
+        and not is_ext_diff:
+            difficulty = session['prev_diff'] or session['difficulty'] or settings.POOL_TARGET
+            diff = difficulty
+        log.debug("%s (%d, %d, %s, %s, %d) %0.2f%% diff(%f)" % (worker_name, valid, invalid, is_banned, is_ext_diff, last_ts, percent, diff))
+        if not is_ext_diff:    
+            Interfaces.share_limiter.submit(self.connection_ref, job_id, difficulty, submit_time, worker_name)
             
         # This checks if submitted share meet all requirements
         # and it is valid proof of work.
@@ -127,7 +135,7 @@ class MiningService(GenericService):
         except SubmitException as e:
             # block_header and block_hash are None when submitted data are corrupted
             invalid += 1
-            Interfaces.worker_manager.worker_log['authorized'][worker_name] = (valid, invalid, is_banned, last_ts)
+            Interfaces.worker_manager.worker_log['authorized'][worker_name] = (valid, invalid, is_banned, diff, is_ext_diff, last_ts)
 
             if is_banned:
                 raise SubmitException("Worker is temporarily banned")
@@ -137,7 +145,7 @@ class MiningService(GenericService):
             raise
 
         valid += 1
-        Interfaces.worker_manager.worker_log['authorized'][worker_name] = (valid, invalid, is_banned, last_ts)
+        Interfaces.worker_manager.worker_log['authorized'][worker_name] = (valid, invalid, is_banned, diff, is_ext_diff, last_ts)
 
         if is_banned:
             raise SubmitException("Worker is temporarily banned")

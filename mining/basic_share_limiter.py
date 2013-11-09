@@ -79,12 +79,16 @@ class BasicShareLimiter(object):
         # Update the difficulty  if it is out of date or not set
         if 'timestamp' not in self.litecoin or self.litecoin['timestamp'] < int(time.time()) - settings.DIFF_UPDATE_FREQUENCY:
             ldiff = (yield Interfaces.template_registry.bitcoin_rpc.getdifficulty())
-            if 'proof-of-work' in ldiff:
-                self.litecoin['difficulty'] = ldiff['proof-of-work']
+            if isinstance(ldiff, (list, tuple)):
+                if 'proof-of-work' in ldiff:
+                    self.litecoin['difficulty'] = ldiff['proof-of-work']
             else:
                 self.litecoin['difficulty'] = ldiff
-            log.debug("Updated litecoin difficulty to %s" %  (self.litecoin['difficulty']))
-        self.litecoin_diff = self.litecoin['difficulty']
+            if settings.MAIN_COIN_ALGORITHM == 'scrypt-jane' or 'scrypt':
+                self.litecoin_diff = self.litecoin['difficulty'] * 65536
+            else:
+                self.litecoin_diff = self.litecoin['difficulty']
+            log.debug("Updated litecoin difficulty to %s" %  (self.litecoin_diff))
 
     def submit(self, connection_ref, job_id, current_difficulty, timestamp, worker_name):
         ts = int(timestamp)

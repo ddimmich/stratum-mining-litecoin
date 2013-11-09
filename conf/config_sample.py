@@ -129,6 +129,11 @@ INSTANCE_ID = 31		# Used for extranonce and needs to be 0-31
 # ******************** Pool Difficulty Settings *********************
 #  Again, Don't change unless you know what this is for.
 
+# Allow external setting of worker difficulty, checks pool_worker table datarow[6] position for target difficulty
+# if present or else defaults to pool target, over rides all other difficulty settings, no checks are made
+# for min or max limits this sould be done by your front end software
+ALLOW_EXTERNAL_DIFFICULTY = False 
+
 VDIFF_X2_TYPE = True  # powers of 2 e.g. 2,4,8,16,32,64,128,256,512,1024
 VDIFF_FLOAT = False    # Use float difficulty
 
