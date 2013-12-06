@@ -7,6 +7,8 @@ The goal is to make a reliable stratum mining server for scrypt based coins. Ove
 
 **NOTE:** This fork is still in development. Many features may be broken. Please report any broken features or issues.
 
+* This fork (ddimmich) adds postgresql support back in.
+
 #Donors
 A special thanks to everyone that has donated to this project. 
 
@@ -68,7 +70,7 @@ I try to stay in #stratum-mining-litecoin on freenode. I am more responsive to r
 * Modified version Wade Womersley (Media Skunk Works)
 * Scrypt conversion from work done by viperaus
 * Modified version by moopless ( Donations Welcome: LdaQyrh8PaLTuBxtgGo97Pj49CScqMTxvX)
-
+* Postgress support added back in by ddimmich (Donations Welcome: LgzEeUKrjbf4U1upxDeN1ebNCAavFrpYm1)
 
 #License
 This software is provides AS-IS without any warranties of any kind. Please use at your own risk. 
